@@ -1,101 +1,183 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import { useState, useEffect } from "react"
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js"
+import { Bar } from "react-chartjs-2"
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
+
+interface ChartData {
+  title: string
+  labels: string[]
+  datasets: Array<{
+    label: string
+    data: number[]
+    backgroundColor: string
+    borderColor: string
+    borderWidth: number
+  }>
+  options: {
+    scales: {
+      x: {
+        title: { display: boolean; text: string }
+      }
+      y: {
+        title: { display: boolean; text: string }
+      }
+    }
+  }
+}
+
+export default function HomePage() {
+  const [chartData, setChartData] = useState<ChartData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchChartData = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch("/api/chart")
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch chart data")
+        }
+
+        const data = await response.json()
+        setChartData(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchChartData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">กำลังโหลดข้อมูล...</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center bg-white p-8 rounded-lg shadow-md max-w-md">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">เกิดข้อผิดพลาด</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            ลองใหม่
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!chartData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 text-lg">ไม่พบข้อมูล</p>
+        </div>
+      </div>
+    )
+  }
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top" as const,
+        labels: {
+          font: {
+            family: "system-ui, -apple-system, sans-serif",
+            size: 14,
+          },
+        },
+      },
+      title: {
+        display: false,
+      },
+    },
+    scales: {
+      x: {
+        title: {
+          display: chartData.options.scales.x.title.display,
+          text: chartData.options.scales.x.title.text,
+          font: {
+            family: "system-ui, -apple-system, sans-serif",
+            size: 14,
+            weight: "bold" as const,
+          },
+        },
+        ticks: {
+          font: {
+            family: "system-ui, -apple-system, sans-serif",
+            size: 12,
+          },
+        },
+      },
+      y: {
+        title: {
+          display: chartData.options.scales.y.title.display,
+          text: chartData.options.scales.y.title.text,
+          font: {
+            family: "system-ui, -apple-system, sans-serif",
+            size: 14,
+            weight: "bold" as const,
+          },
+        },
+        ticks: {
+          font: {
+            family: "system-ui, -apple-system, sans-serif",
+            size: 12,
+          },
+        },
+      },
+    },
+  }
+
+  const data = {
+    labels: chartData.labels,
+    datasets: chartData.datasets,
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">{chartData.title}</h1>
+          <p className="text-gray-600">ข้อมูลจากระบบ n8n</p>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
+          <div className="h-96 md:h-[500px]">
+            <Bar data={data} options={chartOptions} />
+          </div>
+        </div>
+
+        <div className="mt-8 text-center">
+          <div className="inline-flex items-center space-x-4 bg-white rounded-lg px-6 py-3 shadow-md">
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-blue-500 rounded"></div>
+              <span className="text-sm text-gray-600">เวลาหยุดเครื่อง</span>
+            </div>
+            <div className="text-sm text-gray-500">อัปเดตล่าสุด: {new Date().toLocaleDateString("th-TH")}</div>
+          </div>
+        </div>
+      </div>
     </div>
-  );
+  )
 }
